@@ -1,0 +1,28 @@
+#//////////////////////////
+# NPM
+#//////////////////////////
+node_modules/
+
+#//////////////////////////
+# VSCode
+#//////////////////////////
+.vscode/
+
+#//////////////////////////
+# WebStorm
+#//////////////////////////
+.idea/
+
+.DS_Store
+
+# Environment variables
+.env
+
+# Dist folder
+dist/
+
+# Uploaded files
+uploads/
+
+# Personal Test Files
+test/personal/
