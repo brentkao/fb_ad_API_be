@@ -8,15 +8,17 @@ const environmentSchema = z.object({
     const parsed = parseInt(valueAsString, 10);
     return !isNaN(parsed) ? parsed : 3000; // 使用默認值3000如果轉換失敗
   }, z.number()),
+  EXPRESS_SESSION_SECRET: z.string().default("YOUR_EXPRESS_SESSION_SECRET_KEY"),
   JWT_SECRET: z.string().default("JWT_SECRET"),
   DATABASE_URL: z.string(),
 });
 
-const { NODE_ENV, PORT, JWT_SECRET, DATABASE_URL } = process.env;
+const { NODE_ENV, PORT, EXPRESS_SESSION_SECRET, JWT_SECRET, DATABASE_URL } = process.env;
 
 const environment = environmentSchema.safeParse({
   NODE_ENV,
   PORT,
+  EXPRESS_SESSION_SECRET,
   JWT_SECRET,
   DATABASE_URL,
 });

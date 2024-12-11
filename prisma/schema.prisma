@@ -7,20 +7,63 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model Account {
-  uid          String    @id @unique(map: "uid_UNIQUE") @db.Char(26)
-  email        String    @unique(map: "email_UNIQUE") @db.VarChar(45)
-  salt         String    @db.VarChar(255)
-  hash         String    @db.VarChar(255)
-  first_name   String?   @db.VarChar(45)
-  last_name    String?   @db.VarChar(45)
-  country      String?   @db.VarChar(45)
-  country_code String?   @db.VarChar(5)
-  phone_number String?   @db.VarChar(20)
-  birth_date   DateTime? @db.Date
-  create_at    DateTime? @default(now()) @db.DateTime(0)
-  update_at    DateTime? @default(now()) @db.DateTime(0)
+model Company {
+  cid          Int             @id @default(autoincrement())
+  name         String          @db.VarChar(255)
+  status       company_status? @default(ACTIVE)
+  create_at    DateTime?       @default(now()) @db.DateTime(0)
+  update_at    DateTime?       @default(now()) @db.DateTime(0)
+  project      Project[]
+  user_account UserAccount[]
 
-  @@map("account")
+  @@map("company")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model Project {
+  pid           Int       @id @default(autoincrement())
+  cid           Int
+  name          String    @db.VarChar(255)
+  access_token  String?   @default("") @db.VarChar(255)
+  ad_account_id String?   @default("") @db.VarChar(255)
+  config        String?   @db.MediumText
+  auto          String?   @db.MediumText
+  create_at     DateTime? @default(now()) @db.DateTime(0)
+  update_at     DateTime? @default(now()) @db.DateTime(0)
+  company       Company   @relation(fields: [cid], references: [cid], onDelete: NoAction, onUpdate: NoAction, map: "cid")
+
+  @@index([pid, cid], map: "cid")
+  @@index([cid], map: "cid_idx")
+  @@map("project")
+}
+
+model UserAccount {
+  uid       Int                  @id @default(autoincrement())
+  cid       Int
+  username  String?              @default("") @db.VarChar(255)
+  email     String               @db.VarChar(255)
+  password  String               @db.VarChar(255)
+  salt      String               @db.VarChar(255)
+  status    user_account_status? @default(ACTIVE)
+  create_at DateTime?            @default(now()) @db.DateTime(0)
+  update_at DateTime?            @default(now()) @db.DateTime(0)
+  company   Company              @relation(fields: [cid], references: [cid], onDelete: NoAction, onUpdate: NoAction, map: "user_account_company_cid")
+
+  @@unique([cid, email], map: "cid_email_unique")
+  @@index([cid], map: "cid_idx")
+  @@map("user_account")
+}
+
+enum company_status {
+  ACTIVE
+  BLOCKED
+  RESTRICTED
+  CLOSED
+}
+
+enum user_account_status {
+  ACTIVE
+  BLOCKED
+  RESTRICTED
+  CLOSED
 }

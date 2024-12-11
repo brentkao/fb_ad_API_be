@@ -46,6 +46,7 @@ export async function userLogin(req: Request, res: Response) {
 
   const result = z
     .object({
+      cid: z.number().min(1000000, "Cid must bigger then 1000000"),
       email: z.string().email("Invalid email").min(1, "Email is required"),
       password: z.string().min(1, "Password is required"),
     })
@@ -54,17 +55,15 @@ export async function userLogin(req: Request, res: Response) {
     throw new BadRequestError({
       context: formatZodValidationErrors(result.error),
     });
-  const { email, password } = result.data;
+  const { cid, email, password } = result.data;
 
   //step find user
-  const user = await prisma.account.findUnique({
+  const user = await prisma.userAccount.findUnique({
     where: {
-      email,
-    },
-    select: {
-      uid: true,
-      email: true,
-      hash: true,
+      cid_email: {
+        cid,
+        email,
+      },
     },
   });
 
@@ -76,7 +75,7 @@ export async function userLogin(req: Request, res: Response) {
   }
 
   //step compare password
-  const match = await bcrypt.compare(password, user.hash);
+  const match = await bcrypt.compare(password, user.password);
   if (!match) {
     throw new BadRequestError({
       message: "Invalid email or password",
@@ -85,7 +84,7 @@ export async function userLogin(req: Request, res: Response) {
 
   const token = generateLoginJwt({
     role: "user",
-    userId: user.uid,
+    uid: user.uid,
   });
 
   return res.status(200).json({ token: token });
