@@ -103,6 +103,17 @@ export const updateProjectSchema = projectSchema.pick({
 
 export type UpdateProjectSchema = z.infer<typeof updateProjectSchema>;
 
+export const reqGetProjectSchema = projectSchema.pick({
+  pid: true,
+  name: true,
+  ad_account_id: true,
+  config: true,
+  auto: true,
+  create_at: true,
+  update_at: true,
+});
+
+export type ReqGetProjectSchema = z.infer<typeof reqGetProjectSchema>;
 
 export const resProjectSchema = projectSchema.pick({
   pid: true,

@@ -8,6 +8,7 @@ import BadRequestError from "../errors/bad-request-error";
 import { formatZodValidationErrors } from "../util/zod";
 
 import { registerCompanySchema } from "../services/Company/schema/company.schema";
+import { resUserAccountSchema } from "../services/User/schema/user_account.schema";
 
 /**
  * @swagger
@@ -53,6 +54,53 @@ export async function register(req: Request, res: Response) {
   const resData = {
     cid: createResult.cid,
     create_at: createResult.create_at,
+  };
+
+  return res.status(200).json({ message: "Registered", data: resData });
+}
+
+/**
+ * @swagger
+ * /api/company:
+ *   get:
+ *     tags:
+ *       - company
+ *     summary: Get company infomation
+ *     description: Get company infomation details.
+ *     requestBody:
+ *     responses:
+ *       200:
+ *         description: Successfully registered the user account.
+ *       400:
+ *         description: Invalid request data.
+ */
+export async function getCompany(req: Request, res: Response) {
+  const user = req.session.user;
+
+  const cid = user?.cid; // get form express-session
+
+  const companyData = await prisma.company.findUnique({
+    where: {
+      cid,
+    },
+    select: {
+      name: true,
+      project: {
+        select: {
+          pid: true,
+          name: true,
+        },
+      },
+    },
+  });
+  console.log("companyData", companyData);
+  const resUser = resUserAccountSchema.parse(user);
+  const resData = {
+    company: {
+      name: companyData?.name,
+    },
+    user: resUser,
+    projectList: companyData?.project,
   };
 
   return res.status(200).json({ message: "Registered", data: resData });

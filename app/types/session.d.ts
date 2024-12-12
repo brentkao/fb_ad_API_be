@@ -5,6 +5,7 @@ declare module "express-session" {
     user: {
       uid: number;
       cid: number;
+      email: string;
       username: string;
     };
   }

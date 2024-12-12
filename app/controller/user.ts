@@ -8,7 +8,10 @@ import bcrypt from "bcryptjs";
 import BadRequestError from "../errors/bad-request-error";
 import { formatZodValidationErrors } from "../util/zod";
 
-import { registerUserAccountSchema } from "../services/User/schema/user_account.schema";
+import {
+  registerUserAccountSchema,
+  resUserAccountSchema,
+} from "../services/User/schema/user_account.schema";
 
 /**
  * @swagger
@@ -51,7 +54,7 @@ export async function register(req: Request, res: Response) {
     });
   const { cid, email, username, password } = result.data;
 
-  // 思考如何驗證 cid
+  //TODO 思考如何驗證 cid ，是否要透過 otp 還是什麼方式生成 company 驗證模式
 
   const saltRounds = 10;
   const salt = await bcrypt.genSalt(saltRounds);
@@ -65,7 +68,6 @@ export async function register(req: Request, res: Response) {
     password: hashedPassword,
     salt: salt,
   };
-  console.log("userData", userData);
 
   const createResult = await prisma.userAccount.create({
     data: userData,
@@ -134,7 +136,6 @@ export async function login(req: Request, res: Response) {
     });
   }
 
-  //確認密碼
   //step compare password
   let userData = {} as UserAccount;
   createResult.forEach((user) => {
@@ -148,12 +149,15 @@ export async function login(req: Request, res: Response) {
     }
   });
 
-  const resData = {
+  // 將使用者資訊儲存到 session
+  req.session.user = {
     uid: userData.uid,
     cid: userData.cid,
-    username: userData.username,
-    create_at: userData.create_at,
+    email: userData.email,
+    username: userData.username || "Username",
   };
+
+  const resData = resUserAccountSchema.parse(userData);
 
   return res.status(200).json({ message: "Login Successfully", data: resData });
 }
@@ -173,9 +177,16 @@ export async function login(req: Request, res: Response) {
  *         description: Invalid request data.
  */
 export async function logout(req: Request, res: Response) {
-  console.log("logout");
-  //! 清除 cookie
-  return res.status(200).json({ message: "doing something..." });
+  const user = req.session.user;
+
+  req.session.destroy((err) => {
+    console.log("User logout", user, err);
+  });
+
+  // 清除 cookie
+  res.clearCookie("connect.sid");
+
+  return res.status(200).json({ message: "Successfully logout" });
 }
 
 export async function doSomething(req: Request, res: Response) {

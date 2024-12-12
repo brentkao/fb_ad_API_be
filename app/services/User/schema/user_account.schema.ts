@@ -32,3 +32,13 @@ export const loginUserAccountSchema = userAccountSchema.pick({
 export type LoginUserAccountSchema = z.infer<
   typeof loginUserAccountSchema
 >;
+
+
+export const resUserAccountSchema = userAccountSchema.pick({
+  email: true,
+  username: true,
+});
+
+export type ResUserAccountSchema = z.infer<
+  typeof resUserAccountSchema
+>;

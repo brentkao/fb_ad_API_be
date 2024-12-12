@@ -24,9 +24,10 @@ export default function (app: Express) {
   //➫ company
   const companyRouter = express.Router();
   router.use("/company", companyRouter);
-  companyRouter.post("/register",company.register);
+  companyRouter.get("/", company.getCompany);
+  companyRouter.post("/register", company.register);
   const projectRouter = express.Router();
-  companyRouter.use("/project",projectRouter);
+  companyRouter.use("/project", projectRouter);
   projectRouter.post("/", project.register);
   projectRouter.get("/:id", project.getProject);
 

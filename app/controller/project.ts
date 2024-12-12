@@ -11,6 +11,7 @@ import {
   configSchema,
   autoSchema,
   registerProjectSchema,
+  reqGetProjectSchema,
   resProjectSchema,
 } from "../services/Project/schema/project.schema";
 
@@ -40,7 +41,11 @@ import {
  *         description: Invalid request data.
  */
 export async function register(req: Request, res: Response) {
-  const cid = 1000001; // get form express-session
+  const user = req.session.user;
+  const cid = user?.cid; // get form express-session
+  if (!cid) {
+    throw new BadRequestError({ code: 401, message: "Unauthorized Error" });
+  }
 
   const result = registerProjectSchema.safeParse(req.body);
   if (!result.success)
@@ -68,10 +73,14 @@ export async function register(req: Request, res: Response) {
   });
 
   console.log("Create Project Result", createResult);
-  const resConfig = JSON.parse(createResult.config || "{}" );
-  const resAuto = JSON.parse(createResult.auto || "{}" );
-  createResult.config = resConfig;
-  createResult.auto = resAuto;
+
+  //! 特殊處理 如果為 null 的資料拉
+  createResult.config = createResult.config
+    ? JSON.parse(createResult.config)
+    : configSchema.parse({});
+  createResult.auto = createResult.auto
+    ? JSON.parse(createResult.auto)
+    : autoSchema.parse({});
   const resData = resProjectSchema.parse(createResult);
 
   return res.status(200).json({ message: "Project Registered", data: resData });
@@ -101,20 +110,25 @@ export async function register(req: Request, res: Response) {
  *         description: Project not found.
  */
 export async function getProject(req: Request, res: Response) {
-  const cid = 1000001; // get form express-session
+  const user = req.session.user;
+  const cid = user?.cid; // get form express-session
+  if (!cid) {
+    throw new BadRequestError({ code: 401, message: "Unauthorized Error" });
+  }
   const { id } = req.params;
 
   // 嘗試轉換 id 為數字
   const pid = Number(id);
 
   if (isNaN(pid)) {
-    throw new Error("Invalid project ID");
+    throw new BadRequestError({ message: "Invalid project ID" });
   }
 
   const projectData = {
     cid,
     pid,
   };
+  console.log("projectData", projectData);
 
   const project = await prisma.project.findUnique({
     where: projectData,
@@ -122,15 +136,18 @@ export async function getProject(req: Request, res: Response) {
 
   if (!project) {
     throw new BadRequestError({
+      code: 404,
       message: "查無此專案",
     });
   }
-  const resConfig = JSON.parse(project.config || "{}" );
-  const resAuto = JSON.parse(project.auto || "{}" );
-  project.config = resConfig;
-  project.auto = resAuto;
+
+  //! 特殊處理 如果為 null 的資料拉
+  project.config = project.config
+    ? JSON.parse(project.config)
+    : configSchema.parse({});
+  project.auto = project.auto ? JSON.parse(project.auto) : autoSchema.parse({});
+
   const resData = resProjectSchema.parse(project);
 
-  //! 清除 cookie
-  return res.status(200).json({ message: "project", date: resData });
+  return res.status(200).json({ message: "Project Infomation", date: resData });
 }
